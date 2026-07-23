@@ -27,7 +27,10 @@ export function DashboardPage() {
 
   const scheduled = appointments?.filter((a) => a.status === 'SCHEDULED' || a.status === 'CONFIRMED') ?? [];
   const completed = appointments?.filter((a) => a.status === 'COMPLETED') ?? [];
-  const totalRevenue = completed.reduce((sum, a) => sum + Number(a.service?.price ?? 0), 0);
+  const totalRevenue = completed.reduce(
+    (sum, a) => sum + (a.services?.reduce((s, sv) => s + Number(sv.servicePrice), 0) ?? 0),
+    0,
+  );
   const staffRevenue = useStaffRevenue(appointments);
   const commissionRate = Number(tenant?.commissionRate ?? 0);
 
@@ -85,31 +88,34 @@ export function DashboardPage() {
             </Typography>
           ) : (
             <Grid container spacing={2}>
-              {appointments?.map((apt) => (
-                <Grid key={apt.id} size={{ xs: 12, sm: 6 }}>
-                  <Card variant="outlined" sx={{ height: '100%' }}>
-                    <CardContent sx={{ p: 3, '&:last-child': { pb: 3 } }}>
-                      <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', mb: 1 }}>
-                        <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-                          {apt.client?.firstName} {apt.client?.lastName}
+              {appointments?.map((apt) => {
+                const serviceNames = apt.services?.map((s) => s.serviceName).join(', ') ?? '';
+                return (
+                  <Grid key={apt.id} size={{ xs: 12, sm: 6 }}>
+                    <Card variant="outlined" sx={{ height: '100%' }}>
+                      <CardContent sx={{ p: 3, '&:last-child': { pb: 3 } }}>
+                        <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', mb: 1 }}>
+                          <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                            {apt.client?.firstName} {apt.client?.lastName}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary" sx={{ mt: 0.25 }}>
+                            {new Date(apt.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          </Typography>
+                        </Box>
+                        <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
+                          {serviceNames} &mdash; {apt.user?.firstName}
                         </Typography>
-                        <Typography variant="caption" color="text.secondary" sx={{ mt: 0.25 }}>
-                          {new Date(apt.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                        </Typography>
-                      </Box>
-                      <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
-                        {apt.service?.name} &mdash; {apt.user?.firstName}
-                      </Typography>
-                      <Chip
-                        label={apt.status.toLowerCase().replace(/_/g, ' ')}
-                        size="small"
-                        color={statusColors[apt.status]}
-                        variant="filled"
-                      />
-                    </CardContent>
-                  </Card>
-                </Grid>
-              ))}
+                        <Chip
+                          label={apt.status.toLowerCase().replace(/_/g, ' ')}
+                          size="small"
+                          color={statusColors[apt.status]}
+                          variant="filled"
+                        />
+                      </CardContent>
+                    </Card>
+                  </Grid>
+                );
+              })}
             </Grid>
           )}
         </Grid>

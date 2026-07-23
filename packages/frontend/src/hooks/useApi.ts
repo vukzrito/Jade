@@ -177,14 +177,37 @@ export function useStaffRevenue(appointments: Appointment[] | undefined) {
   const revenueByStaff = new Map<string, { name: string; revenue: number }>();
 
   appointments?.forEach((apt) => {
-    if (apt.status !== 'COMPLETED' || !apt.user || !apt.service) return;
+    if (apt.status !== 'COMPLETED' || !apt.user) return;
     const existing = revenueByStaff.get(apt.user.id) ?? {
       name: `${apt.user.firstName} ${apt.user.lastName}`,
       revenue: 0,
     };
-    existing.revenue += Number(apt.service.price);
+    apt.services?.forEach((s) => {
+      existing.revenue += Number(s.servicePrice);
+    });
     revenueByStaff.set(apt.user.id, existing);
   });
 
   return Array.from(revenueByStaff.values()).sort((a, b) => b.revenue - a.revenue);
+}
+
+// --- Client Service History ---
+
+export function useClientAppointments(clientId: string) {
+  return useQuery({
+    queryKey: ['appointments', 'client', clientId],
+    queryFn: () => appointmentsApi.getClientAppointments(clientId),
+    enabled: !!clientId,
+  });
+}
+
+// --- Payments ---
+
+export function useCreatePayment() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ appointmentId, ...input }: { appointmentId: string } & Parameters<typeof appointmentsApi.createPayment>[1]) =>
+      appointmentsApi.createPayment(appointmentId, input),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['appointments'] }),
+  });
 }

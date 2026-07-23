@@ -17,10 +17,18 @@ import TextField from '@mui/material/TextField';
 import Stack from '@mui/material/Stack';
 import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
-import { Plus, Pencil, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
+import Chip from '@mui/material/Chip';
+import Drawer from '@mui/material/Drawer';
+import { Plus, Pencil, Trash2, ChevronLeft, ChevronRight, History } from 'lucide-react';
 import { PageShell } from '../../components/ui/PageShell';
 import { LoadingState } from '../../components/ui/LoadingState';
-import { useClients, useCreateClient, useUpdateClient, useDeleteClient } from '../../hooks/useApi';
+import {
+  useClients,
+  useCreateClient,
+  useUpdateClient,
+  useDeleteClient,
+  useClientAppointments,
+} from '../../hooks/useApi';
 
 interface FormState {
   firstName: string;
@@ -34,10 +42,21 @@ const emptyForm: FormState = {
   firstName: '', lastName: '', email: '', phone: '', notes: '',
 };
 
+const statusColors: Record<string, 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning'> = {
+  SCHEDULED: 'info',
+  CONFIRMED: 'primary',
+  IN_PROGRESS: 'warning',
+  COMPLETED: 'success',
+  CANCELLED: 'error',
+  NO_SHOW: 'default',
+};
+
 export function ClientsPage() {
   const [page, setPage] = useState(1);
   const { data, isLoading } = useClients(page);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [historyClient, setHistoryClient] = useState<string | null>(null);
+  const { data: clientHistory } = useClientAppointments(historyClient ?? '');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<FormState>(emptyForm);
   const createClient = useCreateClient();
@@ -112,6 +131,11 @@ export function ClientsPage() {
                 </TableCell>
                 <TableCell align="right">
                   <Stack direction="row" spacing={0.5} sx={{ justifyContent: 'flex-end' }}>
+                    <Tooltip title="Service History">
+                      <IconButton size="small" color="info" onClick={() => setHistoryClient(client.id)}>
+                        <History size={16} />
+                      </IconButton>
+                    </Tooltip>
                     <Tooltip title="Edit">
                       <IconButton size="small" onClick={() => openEdit(client)}>
                         <Pencil size={16} />
@@ -174,6 +198,65 @@ export function ClientsPage() {
           </DialogActions>
         </Box>
       </Dialog>
+
+      {/* Service History Drawer */}
+      <Drawer
+        anchor="right"
+        open={!!historyClient}
+        onClose={() => setHistoryClient(null)}
+        slotProps={{ paper: { sx: { width: { xs: '100%', sm: 420 } } } }}
+      >
+        <Box sx={{ p: 3 }}>
+          <Typography variant="h6" sx={{ mb: 3, fontWeight: 700 }}>
+            Service History
+          </Typography>
+
+          {!clientHistory || clientHistory.length === 0 ? (
+            <Typography variant="body2" color="text.secondary">
+              No appointments found for this client.
+            </Typography>
+          ) : (
+            <Stack spacing={2}>
+              {clientHistory.map((apt) => {
+                const total = apt.services?.reduce((s, sv) => s + Number(sv.servicePrice), 0) ?? 0;
+                return (
+                  <Paper key={apt.id} variant="outlined" sx={{ p: 2, borderRadius: 2 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', mb: 1 }}>
+                      <Box>
+                        <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+                          {new Date(apt.startTime).toLocaleDateString()}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          {apt.user?.firstName} &middot; {new Date(apt.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </Typography>
+                      </Box>
+                      <Chip label={apt.status.toLowerCase().replace(/_/g, ' ')} size="small" color={statusColors[apt.status] ?? 'default'} />
+                    </Box>
+                    <Stack spacing={0.5} sx={{ mt: 1 }}>
+                      {apt.services?.map((s) => (
+                        <Typography key={s.id} variant="body2" color="text.secondary" sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                          <span>{s.serviceName}</span>
+                          <span>${Number(s.servicePrice).toFixed(2)}</span>
+                        </Typography>
+                      ))}
+                    </Stack>
+                    <Typography variant="subtitle2" sx={{ mt: 1, textAlign: 'right', fontWeight: 700 }}>
+                      Total: ${total.toFixed(2)}
+                    </Typography>
+                    {apt.payments && apt.payments.length > 0 && (
+                      <Box sx={{ mt: 1, pt: 1, borderTop: '1px solid', borderColor: 'divider' }}>
+                        <Typography variant="caption" color="success.main" sx={{ fontWeight: 600 }}>
+                          Paid: ${apt.payments.reduce((s, p) => s + Number(p.amount), 0).toFixed(2)}
+                        </Typography>
+                      </Box>
+                    )}
+                  </Paper>
+                );
+              })}
+            </Stack>
+          )}
+        </Box>
+      </Drawer>
     </PageShell>
   );
 }

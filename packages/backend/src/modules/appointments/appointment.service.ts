@@ -1,7 +1,21 @@
 import { prisma } from '../../lib/prisma.js';
 import { NotFoundError } from '../../utils/errors.js';
 import { paginatedResponse } from '../../utils/pagination.js';
-import type { CreateAppointmentInput, UpdateAppointmentInput, AppointmentQueryInput } from './appointment.schema.js';
+import type {
+  CreateAppointmentInput,
+  UpdateAppointmentInput,
+  AppointmentQueryInput,
+  CreatePaymentInput,
+} from './appointment.schema.js';
+
+const appointmentInclude = {
+  client: { select: { id: true, firstName: true, lastName: true, phone: true } },
+  user: { select: { id: true, firstName: true, lastName: true } },
+  services: {
+    include: { service: { select: { id: true, name: true, duration: true, price: true } } },
+  },
+  payments: true,
+};
 
 export async function listAppointments(tenantId: string, query: AppointmentQueryInput) {
   const where: any = { tenantId };
@@ -22,11 +36,7 @@ export async function listAppointments(tenantId: string, query: AppointmentQuery
   const [data, total] = await Promise.all([
     prisma.appointment.findMany({
       where,
-      include: {
-        client: { select: { id: true, firstName: true, lastName: true, phone: true } },
-        user: { select: { id: true, firstName: true, lastName: true } },
-        service: { select: { id: true, name: true, duration: true, price: true } },
-      },
+      include: appointmentInclude,
       skip: (query.page - 1) * query.limit,
       take: query.limit,
       orderBy: { startTime: 'desc' },
@@ -40,24 +50,37 @@ export async function listAppointments(tenantId: string, query: AppointmentQuery
 export async function getAppointment(tenantId: string, appointmentId: string) {
   const appointment = await prisma.appointment.findFirst({
     where: { id: appointmentId, tenantId },
-    include: {
-      client: true,
-      user: { select: { id: true, firstName: true, lastName: true } },
-      service: true,
-    },
+    include: appointmentInclude,
   });
   if (!appointment) throw new NotFoundError('Appointment');
   return appointment;
 }
 
 export async function createAppointment(tenantId: string, input: CreateAppointmentInput) {
+  const { serviceIds, ...appointmentData } = input;
+
+  const services = await prisma.service.findMany({
+    where: { id: { in: serviceIds }, tenantId },
+  });
+
+  if (services.length !== serviceIds.length) {
+    throw new NotFoundError('One or more services not found');
+  }
+
   return prisma.appointment.create({
-    data: { ...input, tenantId },
-    include: {
-      client: { select: { id: true, firstName: true, lastName: true } },
-      user: { select: { id: true, firstName: true, lastName: true } },
-      service: { select: { id: true, name: true, duration: true, price: true } },
+    data: {
+      ...appointmentData,
+      tenantId,
+      services: {
+        create: services.map((s) => ({
+          serviceId: s.id,
+          serviceName: s.name,
+          servicePrice: s.price,
+          duration: s.duration,
+        })),
+      },
     },
+    include: appointmentInclude,
   });
 }
 
@@ -68,11 +91,7 @@ export async function updateAppointment(tenantId: string, appointmentId: string,
   return prisma.appointment.update({
     where: { id: appointmentId },
     data: input,
-    include: {
-      client: { select: { id: true, firstName: true, lastName: true } },
-      user: { select: { id: true, firstName: true, lastName: true } },
-      service: { select: { id: true, name: true, duration: true, price: true } },
-    },
+    include: appointmentInclude,
   });
 }
 
@@ -95,11 +114,48 @@ export async function getAppointmentsByDate(tenantId: string, date: string) {
       startTime: { gte: dayStart },
       endTime: { lte: dayEnd },
     },
-    include: {
-      client: { select: { id: true, firstName: true, lastName: true, phone: true } },
-      user: { select: { id: true, firstName: true, lastName: true } },
-      service: { select: { id: true, name: true, duration: true, price: true } },
-    },
+    include: appointmentInclude,
     orderBy: { startTime: 'asc' },
+  });
+}
+
+export async function getClientAppointments(tenantId: string, clientId: string) {
+  const appointments = await prisma.appointment.findMany({
+    where: { tenantId, clientId },
+    include: {
+      user: { select: { id: true, firstName: true, lastName: true } },
+      services: {
+        include: { service: { select: { id: true, name: true, duration: true, price: true } } },
+      },
+      payments: true,
+    },
+    orderBy: { startTime: 'desc' },
+    take: 50,
+  });
+
+  return appointments;
+}
+
+export async function createPayment(tenantId: string, appointmentId: string, input: CreatePaymentInput) {
+  const appointment = await prisma.appointment.findFirst({ where: { id: appointmentId, tenantId } });
+  if (!appointment) throw new NotFoundError('Appointment');
+
+  return prisma.payment.create({
+    data: {
+      appointmentId,
+      amount: input.amount,
+      method: input.method,
+      status: input.status,
+    },
+  });
+}
+
+export async function getPayments(tenantId: string, appointmentId: string) {
+  const appointment = await prisma.appointment.findFirst({ where: { id: appointmentId, tenantId } });
+  if (!appointment) throw new NotFoundError('Appointment');
+
+  return prisma.payment.findMany({
+    where: { appointmentId },
+    orderBy: { createdAt: 'desc' },
   });
 }

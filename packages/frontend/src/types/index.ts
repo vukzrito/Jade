@@ -54,19 +54,38 @@ export interface Service {
   isActive: boolean;
 }
 
+export interface AppointmentService {
+  id: string;
+  appointmentId: string;
+  serviceId: string;
+  serviceName: string;
+  servicePrice: number;
+  duration: number;
+  service?: Pick<Service, 'id' | 'name' | 'duration' | 'price'>;
+}
+
+export interface Payment {
+  id: string;
+  appointmentId: string;
+  amount: number;
+  method: 'CASH' | 'CARD' | 'TRANSFER' | 'OTHER';
+  status: 'PAID' | 'PARTIAL' | 'PENDING';
+  createdAt: string;
+}
+
 export interface Appointment {
   id: string;
   tenantId: string;
   clientId: string;
   userId: string;
-  serviceId: string;
   startTime: string;
   endTime: string;
   status: AppointmentStatus;
   notes?: string;
   client?: Pick<Client, 'id' | 'firstName' | 'lastName' | 'phone'>;
   user?: Pick<User, 'id' | 'firstName' | 'lastName'>;
-  service?: Pick<Service, 'id' | 'name' | 'duration' | 'price'>;
+  services: AppointmentService[];
+  payments: Payment[];
 }
 
 export type AppointmentStatus =
@@ -86,5 +105,3 @@ export interface PaginatedResponse<T> {
     totalPages: number;
   };
 }
-
-

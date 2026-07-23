@@ -292,6 +292,76 @@ All design tokens live in `src/theme.ts`. The theme is applied via `ThemeProvide
 
 To reference theme values in `sx`, use string paths like `'primary.main'`, `'text.secondary'`, `'background.default'`. Avoid hardcoding hex values in components.
 
+## Multi-Service Appointments
+
+Each appointment can have **multiple services** via the `AppointmentService` join table.
+
+### Data Model
+- `Appointment` has a `services: AppointmentService[]` relation (no more single `serviceId`)
+- `AppointmentService` snapshots `serviceName`, `servicePrice`, and `duration` at booking time
+- The `service` relation still links back to the `Service` table for reference
+
+### Frontend Patterns
+
+**Creating appointments**: Use MUI `Select` with `multiple` prop for service selection:
+```tsx
+<FormControl fullWidth>
+  <InputLabel>Services</InputLabel>
+  <Select
+    multiple
+    value={form.serviceIds}
+    onChange={...}
+    input={<OutlinedInput label="Services" />}
+    renderValue={(selected) => selected.map(id => services?.find(s => s.id === id)?.name).join(', ')}
+  >
+    {services?.map((s) => (
+      <MenuItem key={s.id} value={s.id}>
+        <Checkbox checked={form.serviceIds.includes(s.id)} size="small" />
+        <ListItemText primary={`${s.name} ($${s.price})`} />
+      </MenuItem>
+    ))}
+  </Select>
+</FormControl>
+```
+
+**Displaying services in tables**: Map over `apt.services` array:
+```tsx
+{apt.services?.map((s) => (
+  <Typography key={s.id} variant="body2">
+    {s.serviceName} (${Number(s.servicePrice).toFixed(2)})
+  </Typography>
+))}
+```
+
+**Computing totals**:
+```ts
+const total = apt.services?.reduce((sum, s) => sum + Number(s.servicePrice), 0) ?? 0;
+```
+
+**Revenue in Dashboard**: The `useStaffRevenue` hook now sums `apt.services[i].servicePrice` instead of `apt.service.price`.
+
+### Payment Recording
+
+- Payments are a separate model linked to `Appointment`
+- Support multiple payment methods: CASH, CARD, TRANSFER, OTHER
+- Each appointment can have multiple payments (for partial payments)
+- Payment dialog opens from the Appointments table via a `$` icon button on completed appointments with outstanding balance
+- Tracking fields: `amount`, `method`, `status` (PAID/PARTIAL/PENDING)
+- Future invoice generation will use this data
+
+```tsx
+// Record a payment
+const createPayment = useCreatePayment();
+createPayment.mutate({ appointmentId, amount: 50, method: 'CASH' });
+```
+
+### Client Service History
+
+- Accessible via a clock/history icon button in the Clients table
+- Opens a right-side `Drawer` showing all appointments for that client
+- Each history card shows: date, time, staff, services with prices, total, status, and payment info
+- Uses `GET /appointments/client/:clientId` endpoint
+
 ## Staff Management (Team Page)
 
 - **Route**: `/team`
