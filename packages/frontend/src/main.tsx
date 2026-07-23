@@ -1,5 +1,4 @@
-import '@mantine/core/styles.css';
-import '@mantine/notifications/styles.css';
+import './index.css';
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { AppProviders } from './providers/AppProviders';

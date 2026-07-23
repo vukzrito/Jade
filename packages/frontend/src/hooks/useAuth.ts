@@ -4,7 +4,6 @@ import { supabase } from '../lib/supabase';
 import { useAuthStore } from '../stores/authStore';
 import * as authApi from '../api/auth';
 import apiClient from '../api/client';
-import { notifications } from '@mantine/notifications';
 
 export function useLogin() {
   const setUser = useAuthStore((s) => s.setUser);
@@ -26,13 +25,7 @@ export function useLogin() {
       setUser(user);
       navigate('/');
     },
-    onError: () => {
-      notifications.show({
-        title: 'Login failed',
-        message: 'Invalid email or password',
-        color: 'red',
-      });
-    },
+    onError: () => {},
   });
 }
 
@@ -74,13 +67,7 @@ export function useRegister() {
       setUser(data.user);
       navigate('/');
     },
-    onError: (error: any) => {
-      notifications.show({
-        title: 'Registration failed',
-        message: error.message || 'Something went wrong',
-        color: 'red',
-      });
-    },
+    onError: () => {},
   });
 }
 

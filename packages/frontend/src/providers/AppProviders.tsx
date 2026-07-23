@@ -1,8 +1,8 @@
 import { useEffect } from 'react';
-import { MantineProvider } from '@mantine/core';
+import { ThemeProvider } from '@mui/material/styles';
+import CssBaseline from '@mui/material/CssBaseline';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter } from 'react-router-dom';
-import { Notifications } from '@mantine/notifications';
 import { theme } from '../theme';
 import { useAuthStore } from '../stores/authStore';
 
@@ -25,10 +25,10 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <MantineProvider theme={theme}>
-        <Notifications position="top-right" />
+      <ThemeProvider theme={theme}>
+        <CssBaseline />
         <BrowserRouter>{children}</BrowserRouter>
-      </MantineProvider>
+      </ThemeProvider>
     </QueryClientProvider>
   );
 }
