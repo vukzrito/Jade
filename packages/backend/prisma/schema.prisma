@@ -29,9 +29,9 @@ model Tenant {
 
 model User {
   id             String   @id @default(cuid())
+  supabaseId     String   @unique @map("supabase_id")
   tenantId       String   @map("tenant_id")
   email          String   @unique
-  passwordHash   String   @map("password_hash")
   firstName      String   @map("first_name")
   lastName       String   @map("last_name")
   role           UserRole @default(STAFF)
@@ -39,7 +39,6 @@ model User {
   avatarUrl      String?  @map("avatar_url")
   isActive       Boolean  @default(true) @map("is_active")
   fcmToken       String?  @map("fcm_token")
-  refreshToken   String?  @map("refresh_token")
   lastLoginAt    DateTime? @map("last_login_at")
   createdAt      DateTime @default(now()) @map("created_at")
   updatedAt      DateTime @updatedAt @map("updated_at")

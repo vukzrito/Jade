@@ -1,7 +1,26 @@
 import { PrismaClient, UserRole } from '@prisma/client';
-import bcrypt from 'bcryptjs';
+import { createClient } from '@supabase/supabase-js';
+import 'dotenv/config';
 
 const prisma = new PrismaClient();
+
+const supabaseAdmin = createClient(
+  process.env.SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  {
+    auth: { autoRefreshToken: false, persistSession: false },
+  },
+);
+
+async function createAuthUser(email: string, password: string) {
+  const { data, error } = await supabaseAdmin.auth.admin.createUser({
+    email,
+    password,
+    email_confirm: true,
+  });
+  if (error || !data.user) throw new Error(`Failed to create auth user ${email}: ${error?.message}`);
+  return data.user.id;
+}
 
 async function main() {
   const tenant = await prisma.tenant.upsert({
@@ -16,28 +35,30 @@ async function main() {
     },
   });
 
-  const passwordHash = await bcrypt.hash('password123', 12);
+  const ownerSupabaseId = await createAuthUser('owner@demosalon.com', 'password123');
 
-  const owner = await prisma.user.upsert({
+  await prisma.user.upsert({
     where: { email: 'owner@demosalon.com' },
     update: {},
     create: {
+      supabaseId: ownerSupabaseId,
       tenantId: tenant.id,
       email: 'owner@demosalon.com',
-      passwordHash,
       firstName: 'Jane',
       lastName: 'Owner',
       role: UserRole.OWNER,
     },
   });
 
+  const staffSupabaseId = await createAuthUser('staff@demosalon.com', 'password123');
+
   await prisma.user.upsert({
     where: { email: 'staff@demosalon.com' },
     update: {},
     create: {
+      supabaseId: staffSupabaseId,
       tenantId: tenant.id,
       email: 'staff@demosalon.com',
-      passwordHash,
       firstName: 'John',
       lastName: 'Staff',
       role: UserRole.STAFF,
@@ -63,7 +84,7 @@ async function main() {
       id: 'demo-haircut',
       tenantId: tenant.id,
       categoryId: haircut.id,
-      name: 'Men\'s Haircut',
+      name: "Men's Haircut",
       duration: 30,
       price: 35,
     },

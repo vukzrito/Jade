@@ -2,37 +2,16 @@ import { Router } from 'express';
 import * as authController from './auth.controller.js';
 import { validate } from '../../middleware/validate.js';
 import { authenticate } from '../../middleware/auth.js';
-import { loginSchema, registerSchema } from './auth.schema.js';
+import { registerSchema } from './auth.schema.js';
 
 const router = Router();
-
-/**
- * @openapi
- * /auth/login:
- *   post:
- *     tags: [Auth]
- *     summary: Login
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               email: { type: string }
- *               password: { type: string }
- *     responses:
- *       200:
- *         description: Login successful
- */
-router.post('/login', validate(loginSchema), authController.login);
 
 /**
  * @openapi
  * /auth/register:
  *   post:
  *     tags: [Auth]
- *     summary: Register a new user/tenant
+ *     summary: Complete registration after Supabase Auth signup
  *     requestBody:
  *       required: true
  *       content:
@@ -40,8 +19,6 @@ router.post('/login', validate(loginSchema), authController.login);
  *           schema:
  *             type: object
  *             properties:
- *               email: { type: string }
- *               password: { type: string }
  *               firstName: { type: string }
  *               lastName: { type: string }
  *               tenantSlug: { type: string }

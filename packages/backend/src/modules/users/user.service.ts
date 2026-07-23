@@ -1,5 +1,5 @@
 import { prisma } from '../../lib/prisma.js';
-import { hashPassword } from '../../utils/password.js';
+import { supabaseAdmin } from '../../lib/supabase.js';
 import { NotFoundError, ConflictError } from '../../utils/errors.js';
 import { paginatedResponse } from '../../utils/pagination.js';
 import type { CreateUserInput, UpdateUserInput } from './user.schema.js';
@@ -28,13 +28,21 @@ export async function createUser(tenantId: string, input: CreateUserInput) {
   const existing = await prisma.user.findUnique({ where: { email: input.email } });
   if (existing) throw new ConflictError('Email already in use');
 
-  const passwordHash = await hashPassword(input.password);
+  const { data: authUser, error } = await supabaseAdmin.auth.admin.createUser({
+    email: input.email,
+    password: input.password,
+    email_confirm: true,
+  });
+
+  if (error || !authUser.user) {
+    throw new Error(error?.message || 'Failed to create auth user');
+  }
 
   const user = await prisma.user.create({
     data: {
+      supabaseId: authUser.user.id,
       tenantId,
       email: input.email,
-      passwordHash,
       firstName: input.firstName,
       lastName: input.lastName,
       role: input.role,
