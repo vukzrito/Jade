@@ -8,15 +8,16 @@ datasource db {
 }
 
 model Tenant {
-  id        String   @id @default(cuid())
-  name      String
-  slug      String   @unique
-  email     String
-  phone     String?
-  address   String?
-  timezone  String   @default("UTC")
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  id             String   @id @default(cuid())
+  name           String
+  slug           String   @unique
+  email          String
+  phone          String?
+  address        String?
+  timezone       String   @default("UTC")
+  commissionRate Decimal  @default(0) @map("commission_rate")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
 
   categories   Category[]
   services     Service[]

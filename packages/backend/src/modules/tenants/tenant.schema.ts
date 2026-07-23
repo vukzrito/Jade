@@ -6,6 +6,7 @@ export const updateTenantSchema = z.object({
   phone: z.string().optional(),
   address: z.string().optional(),
   timezone: z.string().optional(),
+  commissionRate: z.number().min(0).max(100).optional(),
 });
 
 export type UpdateTenantInput = z.infer<typeof updateTenantSchema>;

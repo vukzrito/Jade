@@ -3,6 +3,8 @@ import * as clientsApi from '../api/clients';
 import * as servicesApi from '../api/services';
 import * as appointmentsApi from '../api/appointments';
 import * as tenantsApi from '../api/tenants';
+import * as usersApi from '../api/users';
+import type { Appointment } from '../types';
 
 export function useTenant() {
   return useQuery({
@@ -133,4 +135,56 @@ export function useDeleteAppointment() {
     mutationFn: appointmentsApi.deleteAppointment,
     onSuccess: () => qc.invalidateQueries({ queryKey: ['appointments'] }),
   });
+}
+
+// --- Users / Staff ---
+
+export function useUsers(page = 1) {
+  return useQuery({
+    queryKey: ['users', page],
+    queryFn: () => usersApi.listUsers(page),
+  });
+}
+
+export function useCreateUser() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: usersApi.createUser,
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['users'] }),
+  });
+}
+
+export function useUpdateUser() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, ...input }: { id: string } & Parameters<typeof usersApi.updateUser>[1]) =>
+      usersApi.updateUser(id, input),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['users'] }),
+  });
+}
+
+export function useDeleteUser() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: usersApi.deleteUser,
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['users'] }),
+  });
+}
+
+// --- Staff Revenue ---
+
+export function useStaffRevenue(appointments: Appointment[] | undefined) {
+  const revenueByStaff = new Map<string, { name: string; revenue: number }>();
+
+  appointments?.forEach((apt) => {
+    if (apt.status !== 'COMPLETED' || !apt.user || !apt.service) return;
+    const existing = revenueByStaff.get(apt.user.id) ?? {
+      name: `${apt.user.firstName} ${apt.user.lastName}`,
+      revenue: 0,
+    };
+    existing.revenue += Number(apt.service.price);
+    revenueByStaff.set(apt.user.id, existing);
+  });
+
+  return Array.from(revenueByStaff.values()).sort((a, b) => b.revenue - a.revenue);
 }

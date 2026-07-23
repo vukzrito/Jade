@@ -7,6 +7,7 @@ import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
 import Stack from '@mui/material/Stack';
 import Alert from '@mui/material/Alert';
+import InputAdornment from '@mui/material/InputAdornment';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { PageShell } from '../../components/ui/PageShell';
 import { LoadingState } from '../../components/ui/LoadingState';
@@ -17,7 +18,7 @@ export function SettingsPage() {
   const { data: tenant, isLoading } = useTenant();
   const qc = useQueryClient();
   const [form, setForm] = useState({
-    name: '', email: '', phone: '', address: '', timezone: 'UTC',
+    name: '', email: '', phone: '', address: '', timezone: 'UTC', commissionRate: 0,
   });
   const [showSuccess, setShowSuccess] = useState(false);
 
@@ -29,6 +30,7 @@ export function SettingsPage() {
         phone: tenant.phone ?? '',
         address: tenant.address ?? '',
         timezone: tenant.timezone ?? 'UTC',
+        commissionRate: Number(tenant.commissionRate ?? 0),
       });
     }
   }, [tenant]);
@@ -51,32 +53,73 @@ export function SettingsPage() {
 
   return (
     <PageShell title="Settings">
-      <Card variant="outlined" sx={{ maxWidth: 600 }}>
-        <CardContent sx={{ p: 3, '&:last-child': { pb: 3 } }}>
-          <Typography variant="h6" sx={{ mb: 3 }}>
-            Business Details
-          </Typography>
-          <Box component="form" onSubmit={handleSubmit}>
-            <Stack spacing={2.5}>
-              <TextField label="Business Name" fullWidth value={form.name} onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))} />
-              <TextField label="Email" type="email" fullWidth value={form.email} onChange={(e) => setForm((prev) => ({ ...prev, email: e.target.value }))} />
-              <TextField label="Phone" type="tel" fullWidth value={form.phone} onChange={(e) => setForm((prev) => ({ ...prev, phone: e.target.value }))} />
-              <TextField label="Address" fullWidth value={form.address} onChange={(e) => setForm((prev) => ({ ...prev, address: e.target.value }))} />
-              <TextField label="Timezone" fullWidth value={form.timezone} onChange={(e) => setForm((prev) => ({ ...prev, timezone: e.target.value }))} />
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                <Button type="submit" variant="contained" disabled={updateMutation.isPending} sx={{ minWidth: 100 }}>
-                  {updateMutation.isPending ? 'Saving...' : 'Save'}
-                </Button>
-                {showSuccess && (
-                  <Alert severity="success" sx={{ py: 0, '& .MuiAlert-message': { py: 0.75 } }}>
-                    Settings updated
-                  </Alert>
-                )}
-              </Box>
-            </Stack>
-          </Box>
-        </CardContent>
-      </Card>
+      <Stack spacing={3} sx={{ maxWidth: 600 }}>
+        <Card variant="outlined">
+          <CardContent sx={{ p: 3, '&:last-child': { pb: 3 } }}>
+            <Typography variant="h6" sx={{ mb: 3 }}>
+              Business Details
+            </Typography>
+            <Box component="form" onSubmit={handleSubmit}>
+              <Stack spacing={2.5}>
+                <TextField label="Business Name" fullWidth value={form.name} onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))} />
+                <TextField label="Email" type="email" fullWidth value={form.email} onChange={(e) => setForm((prev) => ({ ...prev, email: e.target.value }))} />
+                <TextField label="Phone" type="tel" fullWidth value={form.phone} onChange={(e) => setForm((prev) => ({ ...prev, phone: e.target.value }))} />
+                <TextField label="Address" fullWidth value={form.address} onChange={(e) => setForm((prev) => ({ ...prev, address: e.target.value }))} />
+                <TextField label="Timezone" fullWidth value={form.timezone} onChange={(e) => setForm((prev) => ({ ...prev, timezone: e.target.value }))} />
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                  <Button type="submit" variant="contained" disabled={updateMutation.isPending} sx={{ minWidth: 100 }}>
+                    {updateMutation.isPending ? 'Saving...' : 'Save'}
+                  </Button>
+                  {showSuccess && (
+                    <Alert severity="success" sx={{ py: 0, '& .MuiAlert-message': { py: 0.75 } }}>
+                      Settings updated
+                    </Alert>
+                  )}
+                </Box>
+              </Stack>
+            </Box>
+          </CardContent>
+        </Card>
+
+        <Card variant="outlined">
+          <CardContent sx={{ p: 3, '&:last-child': { pb: 3 } }}>
+            <Typography variant="h6" sx={{ mb: 1 }}>
+              Commission Rate
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+              Set the percentage that the business takes from each completed appointment. The remainder goes to the staff member.
+            </Typography>
+            <Box component="form" onSubmit={handleSubmit}>
+              <Stack spacing={2.5}>
+                <TextField
+                  label="Commission Rate"
+                  type="number"
+                  fullWidth
+                  value={form.commissionRate}
+                  onChange={(e) => setForm((prev) => ({ ...prev, commissionRate: Number(e.target.value) }))}
+                  slotProps={{
+                    htmlInput: { min: 0, max: 100, step: 0.5 },
+                    input: {
+                      endAdornment: <InputAdornment position="end">%</InputAdornment>,
+                    },
+                  }}
+                  helperText="Between 0% and 100%"
+                />
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                  <Button type="submit" variant="contained" disabled={updateMutation.isPending} sx={{ minWidth: 100 }}>
+                    {updateMutation.isPending ? 'Saving...' : 'Save'}
+                  </Button>
+                  {showSuccess && (
+                    <Alert severity="success" sx={{ py: 0, '& .MuiAlert-message': { py: 0.75 } }}>
+                      Settings updated
+                    </Alert>
+                  )}
+                </Box>
+              </Stack>
+            </Box>
+          </CardContent>
+        </Card>
+      </Stack>
     </PageShell>
   );
 }

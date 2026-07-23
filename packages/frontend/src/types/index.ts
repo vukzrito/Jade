@@ -19,6 +19,7 @@ export interface Tenant {
   phone?: string;
   address?: string;
   timezone: string;
+  commissionRate: number;
   createdAt: string;
 }
 

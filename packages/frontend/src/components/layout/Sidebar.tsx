@@ -6,13 +6,14 @@ import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
 import Typography from '@mui/material/Typography';
 import Divider from '@mui/material/Divider';
-import { LayoutDashboard, Calendar, Users, Scissors, Settings } from 'lucide-react';
+import { LayoutDashboard, Calendar, Users, Scissors, UserCog, Settings } from 'lucide-react';
 
 const links = [
   { label: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
   { label: 'Appointments', path: '/appointments', icon: Calendar },
   { label: 'Clients', path: '/clients', icon: Users },
   { label: 'Services', path: '/services', icon: Scissors },
+  { label: 'Team', path: '/team', icon: UserCog },
   { label: 'Settings', path: '/settings', icon: Settings },
 ];
 

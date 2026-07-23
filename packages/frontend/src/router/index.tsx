@@ -8,6 +8,7 @@ import { DashboardPage } from '../pages/dashboard/DashboardPage';
 import { AppointmentsPage } from '../pages/appointments/AppointmentsPage';
 import { ClientsPage } from '../pages/clients/ClientsPage';
 import { ServicesPage } from '../pages/services/ServicesPage';
+import { TeamPage } from '../pages/team/TeamPage';
 import { SettingsPage } from '../pages/settings/SettingsPage';
 
 export function Router() {
@@ -27,6 +28,7 @@ export function Router() {
         <Route path="/appointments" element={<AppointmentsPage />} />
         <Route path="/clients" element={<ClientsPage />} />
         <Route path="/services" element={<ServicesPage />} />
+        <Route path="/team" element={<TeamPage />} />
         <Route path="/settings" element={<SettingsPage />} />
       </Route>
     </Routes>
