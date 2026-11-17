@@ -6,6 +6,7 @@ export const createServiceSchema = z.object({
   description: z.string().optional(),
   duration: z.number().int().min(1),
   price: z.number().min(0),
+  stampsEarned: z.number().int().min(0).default(1),
 });
 
 export const updateServiceSchema = z.object({
@@ -14,6 +15,7 @@ export const updateServiceSchema = z.object({
   description: z.string().optional(),
   duration: z.number().int().min(1).optional(),
   price: z.number().min(0).optional(),
+  stampsEarned: z.number().int().min(0).optional(),
   isActive: z.boolean().optional(),
 });
 

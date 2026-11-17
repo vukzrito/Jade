@@ -12,6 +12,8 @@ export function useLogin() {
   return useMutation({
     mutationFn: async ({ email, password }: { email: string; password: string }) => {
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      console.log('data', data);
+      console.log('error', error);
       if (error) throw error;
 
       if (data.session) {

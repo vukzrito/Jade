@@ -16,6 +16,7 @@ model Tenant {
   address        String?
   timezone       String   @default("UTC")
   commissionRate Decimal  @default(0) @map("commission_rate")
+  rewardThreshold Int     @default(10) @map("reward_threshold")
   createdAt      DateTime @default(now()) @map("created_at")
   updatedAt      DateTime @updatedAt @map("updated_at")
 
@@ -65,11 +66,13 @@ model Client {
   email     String?
   phone     String?
   notes     String?
+  stamps    Int      @default(0)
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  tenant       Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  appointments Appointment[]
+  tenant          Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  appointments    Appointment[]
+  redeemedRewards RedeemedReward[]
 
   @@index([tenantId])
   @@map("clients")
@@ -92,20 +95,22 @@ model Category {
 }
 
 model Service {
-  id          String   @id @default(cuid())
-  tenantId    String   @map("tenant_id")
-  categoryId  String?  @map("category_id")
-  name        String
-  description String?
-  duration    Int
-  price       Decimal  @db.Decimal(10, 2)
-  isActive    Boolean  @default(true) @map("is_active")
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
+  id           String   @id @default(cuid())
+  tenantId     String   @map("tenant_id")
+  categoryId   String?  @map("category_id")
+  name         String
+  description  String?
+  duration     Int
+  price        Decimal  @db.Decimal(10, 2)
+  stampsEarned Int      @default(1) @map("stamps_earned")
+  isActive     Boolean  @default(true) @map("is_active")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
 
-  tenant             Tenant              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  category           Category?           @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  tenant              Tenant              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  category            Category?           @relation(fields: [categoryId], references: [id], onDelete: SetNull)
   appointmentServices AppointmentService[]
+  redeemedRewards     RedeemedReward[]
 
   @@index([tenantId])
   @@index([categoryId])
@@ -129,6 +134,7 @@ model Appointment {
   user               User                @relation(fields: [userId], references: [id], onDelete: Cascade)
   services           AppointmentService[]
   payments           Payment[]
+  redeemedRewards    RedeemedReward[]
 
   @@index([tenantId])
   @@index([clientId])
@@ -165,6 +171,23 @@ model Payment {
 
   @@index([appointmentId])
   @@map("payments")
+}
+
+model RedeemedReward {
+  id            String   @id @default(cuid())
+  clientId      String   @map("client_id")
+  appointmentId String?  @map("appointment_id")
+  serviceId     String   @map("service_id")
+  serviceName   String   @map("service_name")
+  stampsUsed    Int      @default(0) @map("stamps_used")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  client      Client      @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  appointment Appointment? @relation(fields: [appointmentId], references: [id], onDelete: SetNull)
+  service     Service     @relation(fields: [serviceId], references: [id])
+
+  @@index([clientId])
+  @@map("redeemed_rewards")
 }
 
 enum AppointmentStatus {

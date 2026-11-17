@@ -9,10 +9,10 @@ import type {
 } from './appointment.schema.js';
 
 const appointmentInclude = {
-  client: { select: { id: true, firstName: true, lastName: true, phone: true } },
+  client: { select: { id: true, firstName: true, lastName: true, phone: true, stamps: true } },
   user: { select: { id: true, firstName: true, lastName: true } },
   services: {
-    include: { service: { select: { id: true, name: true, duration: true, price: true } } },
+    include: { service: { select: { id: true, name: true, duration: true, price: true, stampsEarned: true } } },
   },
   payments: true,
 };
@@ -85,14 +85,35 @@ export async function createAppointment(tenantId: string, input: CreateAppointme
 }
 
 export async function updateAppointment(tenantId: string, appointmentId: string, input: UpdateAppointmentInput) {
-  const appointment = await prisma.appointment.findFirst({ where: { id: appointmentId, tenantId } });
+  const appointment = await prisma.appointment.findFirst({
+    where: { id: appointmentId, tenantId },
+    include: {
+      services: {
+        include: { service: { select: { stampsEarned: true } } },
+      },
+    },
+  });
   if (!appointment) throw new NotFoundError('Appointment');
 
-  return prisma.appointment.update({
+  const result = await prisma.appointment.update({
     where: { id: appointmentId },
     data: input,
     include: appointmentInclude,
   });
+
+  // Award loyalty stamps when appointment is completed
+  if (input.status === 'COMPLETED' && appointment.status !== 'COMPLETED') {
+    const totalStamps = appointment.services.reduce(
+      (sum, s) => sum + s.service.stampsEarned,
+      0,
+    );
+    await prisma.client.update({
+      where: { id: appointment.clientId },
+      data: { stamps: { increment: totalStamps } },
+    });
+  }
+
+  return result;
 }
 
 export async function deleteAppointment(tenantId: string, appointmentId: string) {

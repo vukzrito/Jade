@@ -18,7 +18,7 @@ export function SettingsPage() {
   const { data: tenant, isLoading } = useTenant();
   const qc = useQueryClient();
   const [form, setForm] = useState({
-    name: '', email: '', phone: '', address: '', timezone: 'UTC', commissionRate: 0,
+    name: '', email: '', phone: '', address: '', timezone: 'UTC', commissionRate: 0, rewardThreshold: 10,
   });
   const [showSuccess, setShowSuccess] = useState(false);
 
@@ -31,6 +31,7 @@ export function SettingsPage() {
         address: tenant.address ?? '',
         timezone: tenant.timezone ?? 'UTC',
         commissionRate: Number(tenant.commissionRate ?? 0),
+        rewardThreshold: tenant.rewardThreshold ?? 10,
       });
     }
   }, [tenant]);
@@ -104,6 +105,45 @@ export function SettingsPage() {
                     },
                   }}
                   helperText="Between 0% and 100%"
+                />
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                  <Button type="submit" variant="contained" disabled={updateMutation.isPending} sx={{ minWidth: 100 }}>
+                    {updateMutation.isPending ? 'Saving...' : 'Save'}
+                  </Button>
+                  {showSuccess && (
+                    <Alert severity="success" sx={{ py: 0, '& .MuiAlert-message': { py: 0.75 } }}>
+                      Settings updated
+                    </Alert>
+                  )}
+                </Box>
+              </Stack>
+            </Box>
+          </CardContent>
+        </Card>
+
+        <Card variant="outlined">
+          <CardContent sx={{ p: 3, '&:last-child': { pb: 3 } }}>
+            <Typography variant="h6" sx={{ mb: 1 }}>
+              Loyalty Rewards
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+              Set how many stamps a client needs to earn a complimentary service. Stamps are earned when a service is completed.
+            </Typography>
+            <Box component="form" onSubmit={handleSubmit}>
+              <Stack spacing={2.5}>
+                <TextField
+                  label="Reward Threshold"
+                  type="number"
+                  fullWidth
+                  value={form.rewardThreshold}
+                  onChange={(e) => setForm((prev) => ({ ...prev, rewardThreshold: Number(e.target.value) }))}
+                  slotProps={{
+                    htmlInput: { min: 1, step: 1 },
+                    input: {
+                      endAdornment: <InputAdornment position="end">stamps</InputAdornment>,
+                    },
+                  }}
+                  helperText="Minimum stamps needed for a free service"
                 />
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                   <Button type="submit" variant="contained" disabled={updateMutation.isPending} sx={{ minWidth: 100 }}>

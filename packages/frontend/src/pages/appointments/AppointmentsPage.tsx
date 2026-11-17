@@ -37,6 +37,7 @@ import {
   useAllServices,
   useClients,
   useCreatePayment,
+  useUsers,
 } from '../../hooks/useApi';
 import { useAuthStore } from '../../stores/authStore';
 import type { AppointmentStatus } from '../../types';
@@ -79,6 +80,7 @@ export function AppointmentsPage() {
   const currentUser = useAuthStore((s) => s.user);
   const { data: servicesData } = useAllServices();
   const { data: clientsData } = useClients(1);
+  const { data: usersData } = useUsers(1);
   const createPayment = useCreatePayment();
 
   const openCreate = () => {
@@ -286,6 +288,11 @@ export function AppointmentsPage() {
                 </Select>
                 <FormHelperText>Select one or more services</FormHelperText>
               </FormControl>
+              <TextField select label="Staff" fullWidth value={form.userId} onChange={(e) => setForm((prev) => ({ ...prev, userId: e.target.value }))}>
+                {usersData?.data?.filter((u) => u.isActive !== false).map((u) => (
+                  <MenuItem key={u.id} value={u.id}>{u.firstName} {u.lastName} ({u.role})</MenuItem>
+                ))}
+              </TextField>
               <TextField label="Start Time" type="datetime-local" fullWidth value={form.startTime} onChange={(e) => setForm((prev) => ({ ...prev, startTime: e.target.value }))} slotProps={{ inputLabel: { shrink: true } }} />
               <TextField label="End Time" type="datetime-local" fullWidth value={form.endTime} onChange={(e) => setForm((prev) => ({ ...prev, endTime: e.target.value }))} slotProps={{ inputLabel: { shrink: true } }} />
               <TextField label="Notes" multiline rows={3} fullWidth value={form.notes} onChange={(e) => setForm((prev) => ({ ...prev, notes: e.target.value }))} />

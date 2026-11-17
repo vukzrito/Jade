@@ -16,6 +16,7 @@ import serviceRoutes from './modules/services/service.routes.js';
 import categoryRoutes from './modules/categories/category.routes.js';
 import appointmentRoutes from './modules/appointments/appointment.routes.js';
 import notificationRoutes from './modules/notifications/notification.routes.js';
+import loyaltyRoutes from './modules/loyalty/loyalty.routes.js';
 
 const app = express();
 
@@ -43,6 +44,7 @@ app.use('/api/services', serviceRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/appointments', appointmentRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/loyalty', loyaltyRoutes);
 
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });

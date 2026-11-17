@@ -4,6 +4,7 @@ import * as servicesApi from '../api/services';
 import * as appointmentsApi from '../api/appointments';
 import * as tenantsApi from '../api/tenants';
 import * as usersApi from '../api/users';
+import * as loyaltyApi from '../api/loyalty';
 import type { Appointment } from '../types';
 
 export function useTenant() {
@@ -209,5 +210,26 @@ export function useCreatePayment() {
     mutationFn: ({ appointmentId, ...input }: { appointmentId: string } & Parameters<typeof appointmentsApi.createPayment>[1]) =>
       appointmentsApi.createPayment(appointmentId, input),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['appointments'] }),
+  });
+}
+
+// --- Loyalty ---
+
+export function useClientLoyalty(clientId: string) {
+  return useQuery({
+    queryKey: ['loyalty', clientId],
+    queryFn: () => loyaltyApi.getClientLoyalty(clientId),
+    enabled: !!clientId,
+  });
+}
+
+export function useRedeemReward() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: loyaltyApi.redeemReward,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['clients'] });
+      qc.invalidateQueries({ queryKey: ['loyalty'] });
+    },
   });
 }

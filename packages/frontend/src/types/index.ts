@@ -1,3 +1,21 @@
+export interface RedeemedReward {
+  id: string;
+  clientId: string;
+  appointmentId?: string;
+  serviceId: string;
+  serviceName: string;
+  stampsUsed: number;
+  createdAt: string;
+  service?: Pick<Service, 'id' | 'name'>;
+}
+
+export interface ClientLoyalty {
+  stamps: number;
+  rewardThreshold: number;
+  redeemedRewards: RedeemedReward[];
+  canRedeem: boolean;
+}
+
 export interface User {
   id: string;
   email: string;
@@ -20,6 +38,7 @@ export interface Tenant {
   address?: string;
   timezone: string;
   commissionRate: number;
+  rewardThreshold: number;
   createdAt: string;
 }
 
@@ -31,6 +50,7 @@ export interface Client {
   email?: string;
   phone?: string;
   notes?: string;
+  stamps: number;
   createdAt: string;
 }
 
@@ -51,6 +71,7 @@ export interface Service {
   description?: string;
   duration: number;
   price: number;
+  stampsEarned: number;
   isActive: boolean;
 }
 

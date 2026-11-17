@@ -29,11 +29,12 @@ interface FormState {
   description: string;
   duration: number;
   price: number;
+  stampsEarned: number;
   categoryId: string;
 }
 
 const emptyForm: FormState = {
-  name: '', description: '', duration: 30, price: 0, categoryId: '',
+  name: '', description: '', duration: 30, price: 0, stampsEarned: 1, categoryId: '',
 };
 
 export function ServicesPage() {
@@ -60,6 +61,7 @@ export function ServicesPage() {
       description: service.description || '',
       duration: service.duration,
       price: Number(service.price),
+      stampsEarned: service.stampsEarned ?? 1,
       categoryId: service.categoryId || '',
     });
     setDialogOpen(true);
@@ -97,6 +99,7 @@ export function ServicesPage() {
               <TableCell>Category</TableCell>
               <TableCell>Duration</TableCell>
               <TableCell>Price</TableCell>
+              <TableCell>Stamps</TableCell>
               <TableCell>Active</TableCell>
               <TableCell align="right">Actions</TableCell>
             </TableRow>
@@ -122,6 +125,11 @@ export function ServicesPage() {
                 <TableCell>
                   <Typography variant="body2" sx={{ fontWeight: 600, color: 'primary.main' }}>
                     ${Number(service.price).toFixed(2)}
+                  </Typography>
+                </TableCell>
+                <TableCell>
+                  <Typography variant="body2" color="text.secondary">
+                    {service.stampsEarned ?? 1}
                   </Typography>
                 </TableCell>
                 <TableCell>
@@ -189,6 +197,7 @@ export function ServicesPage() {
               <TextField label="Description" multiline rows={3} fullWidth value={form.description} onChange={(e) => setForm((prev) => ({ ...prev, description: e.target.value }))} />
               <TextField label="Duration (minutes)" type="number" fullWidth value={form.duration} onChange={(e) => setForm((prev) => ({ ...prev, duration: Number(e.target.value) }))} slotProps={{ htmlInput: { min: 1 } }} />
               <TextField label="Price" type="number" fullWidth value={form.price} onChange={(e) => setForm((prev) => ({ ...prev, price: Number(e.target.value) }))} slotProps={{ htmlInput: { min: 0, step: 0.01 } }} />
+              <TextField label="Stamps Earned" type="number" fullWidth value={form.stampsEarned} onChange={(e) => setForm((prev) => ({ ...prev, stampsEarned: Number(e.target.value) }))} slotProps={{ htmlInput: { min: 0 } }} helperText="Stamps awarded to client when this service is completed" />
             </Stack>
           </DialogContent>
           <DialogActions>
