@@ -4,13 +4,16 @@ import 'dotenv/config';
 
 const prisma = new PrismaClient();
 
-const supabaseAdmin = createClient(
-  process.env.SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  {
-    auth: { autoRefreshToken: false, persistSession: false },
-  },
-);
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseSecretKey = process.env.SUPABASE_SECRET_KEY;
+
+if (!supabaseUrl || !supabaseSecretKey) {
+  throw new Error('Missing SUPABASE_URL or SUPABASE_SECRET_KEY environment variables');
+}
+
+const supabaseAdmin = createClient(supabaseUrl, supabaseSecretKey, {
+  auth: { autoRefreshToken: false, persistSession: false },
+});
 
 async function createAuthUser(email: string, password: string) {
   const { data, error } = await supabaseAdmin.auth.admin.createUser({
